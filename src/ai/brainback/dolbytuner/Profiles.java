@@ -86,9 +86,12 @@ final class Profiles {
             },
             THIRDS, VOICE_EQ, -7f, 80f);
 
-    /** Same EQ as MUSIC, Dolby speaker virtualizer at maximum (virtual surround). */
-    static final Profile MUSIC_WIDE = new Profile("music_wide", "Music wide",
-            "Music + maximum Dolby virtual surround (angle 30, surround boost 96)",
+    /**
+     * Fill the room: big but controlled 50-125 Hz, warm 200-315 Hz body, clean mids, presence and
+     * air for fidelity; maximum Dolby surround; limiter on. Measured: 2.0 dB RMS from target.
+     */
+    static final Profile MUSIC_DEPTH = new Profile("music_depth", "Music depth",
+            "Room-filling oomph with fidelity: deep controlled bass, warm body, clean detail, maximum surround",
             new String[]{
                     "VirtualizerMode", "e:ENABLE",
                     "SpeakerVirtualizerAngle", "i:30",
@@ -97,11 +100,12 @@ final class Profiles {
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
             },
-            THIRDS, MUSIC_EQ, -7f, 80f);
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 8f, -2.35f, -11.17f, -15f, -15f, -15f, -12.12f, -5.26f, -1.75f, -1.76f, -0.37f, -0.07f, -1.72f, -1.65f, -0.68f, 1.45f, 5.17f, 6.56f, 2.9f, -1.77f, -3.22f, -3.44f, -3.15f, -0.66f, 5.24f, 0f, 0f},
+            -9f, 80f);
 
     /** Measured fit, see tuning/thunder.json. */
     static final Profile THUNDER = new Profile("thunder", "Thunder",
-            "No safety net: +12 dB at 45-100 Hz, no limiter, no headroom, maximum Dolby surround. Clips at high volume by design",
+            "No safety net: up to +15 dB boom at 63-160 Hz, no limiter, no headroom, maximum Dolby surround. Clips at high volume by design",
             new String[]{
                     "VirtualizerMode", "e:ENABLE",
                     "SpeakerVirtualizerAngle", "i:30",
@@ -110,7 +114,7 @@ final class Profiles {
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
             },
-            THIRDS, new float[]{-6f, -6f, -6f, -6f, 12f, 7.3f, -4.43f, -13f, -15f, -15f, -12.6f, -6.73f, -3.2f, -2.07f, -0.11f, -0.02f, -2.18f, -2.05f, -0.68f, 0.76f, 2.78f, 3.31f, 0.84f, -2.5f, -3.5f, -3.21f, -2.48f, -0.22f, 5.2f, 0f, 0f},
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 15f, 14.28f, 3.1f, -6.16f, -10.87f, -11.01f, -8.53f, -5.31f, -3.96f, -2.99f, -0.64f, -1.12f, -2.54f, -1.11f, 0.33f, 1.8f, 3.81f, 3.41f, -0.03f, -3.25f, -4f, -3.8f, -3.06f, -0.7f, 5.12f, 0f, 0f},
             0f, 80f, false);
 
     /** Measured fit, see tuning/movies.json. */
@@ -170,9 +174,10 @@ final class Profiles {
             -5.7f, 80f);
 
     /** Order = remote-button cycle order and on-screen order. */
-    static final Profile[] ALL = {MUSIC, MUSIC_WIDE, MELODIES, THUNDER, MOVIES, VOICE, NIGHT, PURE};
+    static final Profile[] ALL = {MUSIC, MUSIC_DEPTH, MELODIES, THUNDER, MOVIES, VOICE, NIGHT, PURE};
 
     static Profile byId(String id) {
+        if ("music_wide".equals(id)) id = "music_depth"; // replaced Nov 24; keep saved state working
         for (Profile p : ALL) if (p.id.equals(id)) return p;
         return null;
     }

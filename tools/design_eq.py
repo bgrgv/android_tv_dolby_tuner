@@ -25,8 +25,12 @@ TARGETS = {
     "voice": {50: -8, 63: -6, 80: -2, 100: 2, 125: 3, 160: 3, 200: 2, 250: 1, 315: 0, 1600: 0,
               2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 6300: 0, 8000: -1, 10000: -2, 12500: -3},
     # Thunder: as much 45-100 Hz as the woofer will take. No limiter, no headroom (deliberately unsafe).
-    "thunder": {50: 16, 63: 18, 80: 17, 100: 14, 125: 10, 160: 7, 200: 4, 250: 2, 315: 0, 4000: 0,
+    "thunder": {50: 18, 63: 22, 80: 22, 100: 20, 125: 18, 160: 14, 200: 8, 250: 4, 315: 0, 4000: 0,
                 6300: 1, 10000: 2, 12500: 2},
+    # Music depth: fill the room. Big but controlled 50-125 Hz, warm 200-315 Hz body, clean mids,
+    # presence and air for fidelity.
+    "depth": {50: 12, 63: 13, 80: 13, 100: 12, 125: 10, 160: 8, 200: 5, 250: 4, 315: 2.5, 400: 1,
+              500: 0, 1600: 0, 2500: 1, 3150: 1, 4000: 1, 5000: 1, 6300: 1.5, 8000: 2, 10000: 2.5, 12500: 2.5},
     # Movies: big low end for impact, controlled boom, dialogue presence.
     "movies": {50: 12, 63: 13, 80: 12, 100: 9, 125: 7, 160: 5, 200: 3, 250: 1, 315: 0, 1250: 0,
                2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 8000: 1, 10000: 0, 12500: 0},
@@ -40,7 +44,7 @@ TARGETS = {
     "pure": {50: 6, 63: 7, 80: 7, 100: 6, 125: 5, 160: 4, 200: 3, 250: 2, 315: 1, 500: 0.5, 1000: 0,
              2000: -0.5, 4000: -1, 8000: -2, 10000: -2.5, 12500: -3},
 }
-BOOST_LIMIT = {"thunder": 12.0, "movies": 8.0}
+BOOST_LIMIT = {"thunder": 15.0, "movies": 8.0, "depth": 8.0}
 NO_SAFETY = {"thunder"}        # input gain 0 dB and the app turns the limiter off
 WOOFER_MIN = 45.0      # measured: nothing useful below ~45 Hz
 MAX_BOOST, MAX_CUT = 6.0, -15.0
