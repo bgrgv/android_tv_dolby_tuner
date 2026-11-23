@@ -172,8 +172,25 @@ final class Profiles {
             THIRDS, new float[]{-6f, -6f, -6f, -6f, 4.71f, -9.11f, -15f, -15f, -15f, -15f, -14.18f, -7.01f, -2.72f, -1.59f, 0.31f, 0.38f, -1.99f, -2.26f, -1.15f, 0.19f, 2.66f, 3.71f, 0.67f, -3.87f, -6f, -6.19f, -6.08f, -4.97f, 0.11f, 0f, 0f},
             -5.7f, 80f);
 
+    /**
+     * Hybrid: Thunder's boom spread across 63-250 Hz + Melodies' warm body and smooth top (no boost
+     * above 5 kHz). Limiter on, 10 dB headroom, so it stays clean. Measured: 2.1 dB RMS from target.
+     */
+    static final Profile THUNDER_MELODY = new Profile("thunder_melody", "Thunder melody",
+            "Hybrid: Thunder's wide boom with Melodies' warmth and smooth top, kept clean by the limiter",
+            new String[]{
+                    "VirtualizerMode", "e:ENABLE",
+                    "SpeakerVirtualizerAngle", "i:25",
+                    "VirtualizerSurroundBoostStrength", "i:72",
+                    "VolumeLevelerMode", "e:DISABLE",
+                    "VolumeLevelerStrength", "i:0",
+                    "DialogueEnhancerStrength", "i:0",
+            },
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 9f, 1.91f, -5.36f, -9.59f, -11.06f, -9.4f, -6.42f, -3.05f, -0.72f, 0.48f, 0.62f, 0.02f, -0.77f, -0.37f, 0.97f, 3.03f, 4.12f, 3.16f, 0.46f, -2.78f, -4.82f, -5.7f, -5.5f, -2.7f, 0f, 0f, 0f},
+            -10f, 80f);
+
     /** Order = remote-button cycle order and on-screen order. */
-    static final Profile[] ALL = {MUSIC, MUSIC_DEPTH, MELODIES, THUNDER, MOVIES, VOICE, NIGHT, PURE};
+    static final Profile[] ALL = {MUSIC, MUSIC_DEPTH, MELODIES, THUNDER_MELODY, THUNDER, MOVIES, VOICE, NIGHT, PURE};
 
     static Profile byId(String id) {
         if ("music_wide".equals(id)) id = "music_depth"; // replaced Nov 24; keep saved state working

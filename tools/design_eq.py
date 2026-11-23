@@ -28,6 +28,10 @@ TARGETS = {
     # v3: broad smooth shelf, 50-400 Hz (spread, not one hammered peak); v2's +15 dB bands clipped/rattled.
     "thunder": {50: 15, 63: 17, 80: 19, 100: 19, 125: 18, 160: 17, 200: 14, 250: 10, 315: 6, 400: 3,
                 500: 1, 630: 0, 4000: 0, 6300: 0, 10000: 0, 12500: 0},
+    # Thunder melody: Thunder's spread boom (80-250 Hz) + Melodies' warm body and smooth top.
+    "tmelody": {50: 12, 63: 14, 80: 16, 100: 16, 125: 15, 160: 14, 200: 11, 250: 8, 315: 5, 400: 3,
+                500: 1.5, 630: 0.5, 800: 0, 2000: 0, 3150: -1, 4000: -1.5, 5000: -1.5, 6300: -1,
+                8000: -0.5, 10000: 0, 12500: 0},
     # Music depth: fill the room. Big but controlled 50-125 Hz, warm 200-315 Hz body, clean mids,
     # presence and air for fidelity.
     "depth": {50: 12, 63: 13, 80: 13, 100: 12, 125: 10, 160: 8, 200: 5, 250: 4, 315: 2.5, 400: 1,
@@ -46,15 +50,15 @@ TARGETS = {
     "pure": {50: 6, 63: 7, 80: 7, 100: 6, 125: 5, 160: 4, 200: 3, 250: 2, 315: 1, 500: 0.5, 1000: 0,
              2000: -0.5, 4000: -1, 8000: -2, 10000: -2.5, 12500: -3},
 }
-BOOST_LIMIT = {"thunder": 10.0, "movies": 8.0, "depth": 8.0}
+BOOST_LIMIT = {"thunder": 10.0, "movies": 8.0, "depth": 8.0, "tmelody": 9.0}
 HEADROOM = {"thunder": -3.0}   # no limiter, but enough headroom that bass peaks stop clipping (rattle)
-SMOOTH = {"thunder": [1, 2, 3, 2, 1]}   # wider smoothing: no narrow peaks
+SMOOTH = {"thunder": [1, 2, 3, 2, 1], "tmelody": [1, 2, 3, 2, 1]}   # wider smoothing: no narrow peaks
 NO_SAFETY = {"thunder"}        # input gain 0 dB and the app turns the limiter off
 WOOFER_MIN = 45.0      # measured: nothing useful below ~45 Hz
 MAX_BOOST, MAX_CUT = 6.0, -15.0
 CUT_LIMIT = {"voice": -20.0, "night": -20.0}   # speech wants far less of the TV's 80-200 Hz hump than music does
 FIT_LO, FIT_HI = 50, 12500
-NO_HF_BOOST = {"music", "depth", "thunder"}   # MacBook mic reads high treble low: boosting there made "s" hiss
+NO_HF_BOOST = {"music", "depth", "thunder", "tmelody"}   # MacBook mic reads high treble low: boosting there made "s" hiss
 
 
 def target_curve(name):
