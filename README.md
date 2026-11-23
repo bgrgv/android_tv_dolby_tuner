@@ -19,13 +19,19 @@ one-press listening profiles for YouTube.
 
 **Listening profiles** (top of the screen, one press, persist after you close the app and after a restart):
 
-| | Music | Music wide | Podcasts & docs |
+| Profile | Sound | Dolby | EQ frame |
 |---|---|---|---|
-| EQ (measured, 31 bands) | Punchy 50-80 Hz, the TV's 100-250 Hz boom cut by up to 15 dB, 2-2.5 kHz presence dip filled | same | Bass boom cut by up to 20 dB, speech presence +2..3 dB at 2-4 kHz, soft top end |
-| Dolby virtual surround | On, angle 25, boost 72 | On, maximum (angle 30, boost 96) | Off (voice stays centred) |
-| Dialogue enhancer | 0 | 0 | 10 / 16 |
-| Volume leveller | Off | Off | On, 5 / 10 |
-| EQ frame (added delay) | 80 ms | 80 ms | 60 ms |
+| **Music** | Punchy 50-80 Hz, the TV's 100-250 Hz boom cut up to 15 dB, 2-2.5 kHz presence dip filled | Surround (angle 25, boost 72) | 80 ms |
+| **Music wide** | Same EQ as Music | Maximum surround (angle 30, boost 96) | 80 ms |
+| **Melodies** | Warm, smooth: rounded bass, low-mid body, softened 3-5 kHz, silky air | Gentle surround (20 / 48) | 80 ms |
+| **Thunder** | +12 dB at 45-100 Hz, **no limiter, no headroom**: clips at high volume by design | Maximum surround | 80 ms |
+| **Movies** | Big 50-80 Hz impact + dialogue presence at 2-4 kHz | Surround (25 / 80), dialogue enhancer 8 | 60 ms |
+| **Podcasts & docs** | Bass boom cut up to 20 dB, speech presence +2..3 dB | Centred, dialogue enhancer 10, leveller 5 | 60 ms |
+| **Night** | Little bass, voices forward | Centred, dialogue enhancer 10, leveller 8 | 60 ms |
+| **Pure** | Neutral studio-style in-room curve, a reference for judging the others | No Dolby effects | 80 ms |
+
+Longer EQ frames give finer bass control but add audio delay, so the profiles you watch faces
+with use 60 ms.
 
 The EQ curves are **measured room corrections**, not guesses: the TV played sweeps, a MacBook
 microphone recorded them at the listening seat, and the EQ was fitted to a target over three
@@ -96,8 +102,8 @@ Tips:
 
 ## Remote button (optional)
 
-Turn a spare remote button into a sound switch: **short press** cycles Music -> Music wide ->
-Podcasts & docs (a note pops up with the name), **long press** (about 1 s) opens Dolby Tuner.
+Turn a spare remote button into a sound switch: **short press** steps through the profiles in the
+order above (a note pops up with the name), **long press** (about 1 s) opens Dolby Tuner.
 It is an accessibility service that filters key events, so no root is needed.
 
 The development remote's spare button sends Linux `KEY_MEDIA` (scan code 226; its stock job is
@@ -183,6 +189,13 @@ TV amp -> speakers + woofer
 - On the development TV the speakers + woofer + room already put **+29 dB at 125 Hz** over the
   midrange with the TV's Bass Boost at 5: "more bass" by ear was mostly boom. Measure before boosting.
 
+- **Register with the Dolby service once per process, never per action.**
+  `DolbyAudioServiceClientManager.register()` calls `restoreDefaultState()` (asynchronously)
+  whenever a new client token registers, and again on deregister and client death. Binding and
+  registering per button press made every profile land and then revert a moment later.
+  `DolbyClient.java` holds one never-unbound connection and waits 1.5 s after its own first
+  registration for that reset to pass. Telltale in logcat: `MS12Server:
+  setSpeakerVirtualizerStartFrequency() frequency 0 out of valid range` marks each reset.
 - **The bind intent must carry the action `com.dolby.android.audio.service.IDolbyAudioService`.**
   `DolbyAudioService.onBind()` does `intent.getAction().equals(...)` with no null check, so binding
   with no action **crashes the Dolby service** (it restarts by itself). With any other action it
@@ -211,6 +224,7 @@ tuning/                       fitted curves and before/after measurements
 src/ai/brainback/dolbytuner/
   MainActivity.java           UI: profiles, presets, manual controls, engine info
   Dolby.java                  reflection wrapper over IDolbyAudioService
+  DolbyClient.java            the single shared, never-unbound Dolby connection
   Profiles.java               listening profiles: Dolby values + EQ curves
   EqService.java              foreground service holding the global EQ
   BootReceiver.java           reapplies the active profile and saved values after boot

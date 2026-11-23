@@ -24,10 +24,27 @@ TARGETS = {
     # Speech: lean below 80 Hz, a little warmth at 100-250 Hz, presence at 2-4 kHz, soft top end.
     "voice": {50: -8, 63: -6, 80: -2, 100: 2, 125: 3, 160: 3, 200: 2, 250: 1, 315: 0, 1600: 0,
               2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 6300: 0, 8000: -1, 10000: -2, 12500: -3},
+    # Thunder: as much 45-100 Hz as the woofer will take. No limiter, no headroom (deliberately unsafe).
+    "thunder": {50: 16, 63: 18, 80: 17, 100: 14, 125: 10, 160: 7, 200: 4, 250: 2, 315: 0, 4000: 0,
+                6300: 1, 10000: 2, 12500: 2},
+    # Movies: big low end for impact, controlled boom, dialogue presence.
+    "movies": {50: 12, 63: 13, 80: 12, 100: 9, 125: 7, 160: 5, 200: 3, 250: 1, 315: 0, 1250: 0,
+               2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 8000: 1, 10000: 0, 12500: 0},
+    # Melodies: warm and smooth. Rounded bass, low-mid body, softened 3-5 kHz, silky air.
+    "melodies": {50: 6, 63: 8, 80: 8, 100: 7, 125: 6, 160: 5, 200: 4, 250: 3, 315: 2, 400: 1, 500: 0,
+                 2000: 0, 3150: -1, 4000: -1.5, 5000: -1, 6300: 0, 8000: 1, 10000: 2.5, 12500: 3},
+    # Night: little bass, forward voices (pairs with a strong leveller).
+    "night": {50: -10, 63: -8, 80: -4, 100: 0, 125: 2, 160: 2, 200: 2, 250: 1, 315: 0, 1600: 0,
+              2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 6300: 0, 8000: -1, 10000: -2, 12500: -3},
+    # Pure: neutral in-room reference (gentle bass rise, gentle treble tilt), no Dolby tricks.
+    "pure": {50: 6, 63: 7, 80: 7, 100: 6, 125: 5, 160: 4, 200: 3, 250: 2, 315: 1, 500: 0.5, 1000: 0,
+             2000: -0.5, 4000: -1, 8000: -2, 10000: -2.5, 12500: -3},
 }
+BOOST_LIMIT = {"thunder": 12.0, "movies": 8.0}
+NO_SAFETY = {"thunder"}        # input gain 0 dB and the app turns the limiter off
 WOOFER_MIN = 45.0      # measured: nothing useful below ~45 Hz
 MAX_BOOST, MAX_CUT = 6.0, -15.0
-CUT_LIMIT = {"voice": -20.0}   # speech wants far less of the TV's 80-200 Hz hump than music does
+CUT_LIMIT = {"voice": -20.0, "night": -20.0}   # speech wants far less of the TV's 80-200 Hz hump than music does
 FIT_LO, FIT_HI = 50, 12500
 
 
@@ -49,11 +66,11 @@ def fit(target, meas, prev=None, step=1.0):
     base = np.zeros_like(T) if prev is None else np.array(prev["third_gains"])
     g = base + step * err
     g = np.convolve(np.pad(g, 1, mode="edge"), [0.25, 0.5, 0.25], mode="valid")  # light smoothing
-    g = np.clip(g, CUT_LIMIT.get(target, MAX_CUT), MAX_BOOST)
+    g = np.clip(g, CUT_LIMIT.get(target, MAX_CUT), BOOST_LIMIT.get(target, MAX_BOOST))
     g[(T < FIT_LO) | (T > FIT_HI)] = 0.0
-    g[T < WOOFER_MIN] = -12.0 if target == "voice" else -6.0   # do not drive the woofer below its range
+    g[T < WOOFER_MIN] = -12.0 if target in ("voice", "night") else -6.0   # do not drive the woofer below its range
     edges = list(T[:-1] * 2 ** (1 / 6)) + [20000.0]
-    inp = -max(0.0, float(g.max())) - 1.0
+    inp = 0.0 if target in NO_SAFETY else -max(0.0, float(g.max())) - 1.0
     out = {"target": target, "edges": [round(e, 1) for e in edges], "third_gains": [round(x, 2) for x in g],
            "gains": [round(x, 2) for x in g], "input": round(inp, 1)}
     with open(os.path.join(m.OUT, target + ".json"), "w") as fh: json.dump(out, fh, indent=1)
@@ -63,6 +80,7 @@ def fit(target, meas, prev=None, step=1.0):
 def push(target, frame=None):
     d = json.load(open(os.path.join(m.OUT, target + ".json")))
     extra = ["--ef", "frame", str(frame)] if frame else []
+    if target in NO_SAFETY: extra += ["--ez", "limiter", "false"]
     m.ctrl("--es", "cmd", "eq", "--es", "id", "custom", *extra,
            "--efa", "edges", ",".join(map(str, d["edges"])),
            "--efa", "gains", ",".join(map(str, d["gains"])),

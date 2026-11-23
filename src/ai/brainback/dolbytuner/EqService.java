@@ -41,7 +41,8 @@ public class EqService extends Service {
             float[] g = intent.getFloatArrayExtra("gains");
             float[] e = intent.getFloatArrayExtra("edges");
             p = new Profiles.Profile("custom", "Custom", "", new String[0],
-                    e != null ? e : Profiles.EDGES, g, intent.getFloatExtra("input", 0f), frameMs);
+                    e != null ? e : Profiles.EDGES, g, intent.getFloatExtra("input", 0f), frameMs,
+                    intent.getBooleanExtra("limiter", true));
         }
         startForeground(1, notification(p == null ? "EQ off" : "EQ: " + p.label));
         release();
@@ -82,7 +83,8 @@ public class EqService extends Service {
         dp.setPreEqAllChannelsTo(eq);
         dp.setInputGainAllChannelsTo(p.inputGainDb);
         // Brick-wall-ish limiter: keeps bass boosts from clipping into the TV amp's own limiter.
-        dp.setLimiterAllChannelsTo(new DynamicsProcessing.Limiter(true, true, 0,
+        // Off only for profiles that ask for no safety net (Thunder).
+        dp.setLimiterAllChannelsTo(new DynamicsProcessing.Limiter(true, p.limiter, 0,
                 1f /*attack ms*/, 60f /*release ms*/, 10f /*ratio*/, -1f /*threshold dB*/, 0f /*post gain*/));
         dp.setEnabled(true);
     }

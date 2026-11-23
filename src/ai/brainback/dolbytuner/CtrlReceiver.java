@@ -63,6 +63,7 @@ public class CtrlReceiver extends BroadcastReceiver {
                     s.putExtra("input", in.getFloatExtra("input", 0f));
                 }
                 if (in.hasExtra("frame")) s.putExtra("frame", in.getFloatExtra("frame", 40f));
+                s.putExtra("limiter", in.getBooleanExtra("limiter", true));
                 app.startForegroundService(s);
                 Log.i(Dolby.TAG, "eq -> " + str(in, "id", "off"));
                 pr.finish();
@@ -106,15 +107,10 @@ public class CtrlReceiver extends BroadcastReceiver {
     interface DolbyJob { void run(Dolby d) throws Exception; }
 
     static void withDolby(Context app, DolbyJob job, PendingResult pr) {
-        ServiceConnection conn = new ServiceConnection() {
-            @Override public void onServiceConnected(ComponentName n, IBinder b) {
-                try { job.run(new Dolby(b)); } catch (Throwable t) { Log.e(Dolby.TAG, "dolby job", t); }
-                app.unbindService(this);
-                if (pr != null) pr.finish();
-            }
-            @Override public void onServiceDisconnected(ComponentName n) { }
-        };
-        if (!app.bindService(Dolby.intent(), conn, Context.BIND_AUTO_CREATE)) { Log.e(Dolby.TAG, "bind failed"); if (pr != null) pr.finish(); }
+        // One shared registration (see DolbyClient): re-registering resets the Dolby engine.
+        DolbyClient.run(app, d -> {
+            try { job.run(d); } finally { if (pr != null) pr.finish(); }
+        });
     }
 
     private static String str(Intent i, String k, String def) {

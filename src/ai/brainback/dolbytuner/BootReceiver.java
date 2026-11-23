@@ -20,20 +20,7 @@ public class BootReceiver extends BroadcastReceiver {
         if (Profiles.byId(active) != null) EqService.start(app, active);
         if (app.getSharedPreferences(Dolby.PREFS, Context.MODE_PRIVATE).getAll().isEmpty()) return;
         final PendingResult pr = goAsync();
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            ServiceConnection conn = new ServiceConnection() {
-                @Override public void onServiceConnected(ComponentName n, IBinder b) {
-                    try { new Dolby(b).applyAll(app); }
-                    catch (Throwable t) { Log.e(Dolby.TAG, "boot apply failed", t); }
-                    app.unbindService(this);
-                    pr.finish();
-                }
-                @Override public void onServiceDisconnected(ComponentName n) { }
-            };
-            if (!app.bindService(Dolby.intent(), conn, Context.BIND_AUTO_CREATE)) {
-                Log.e(Dolby.TAG, "boot bind failed");
-                pr.finish();
-            }
-        }, 20000);
+        new Handler(Looper.getMainLooper()).postDelayed(() ->
+                DolbyClient.run(app, d -> { try { d.applyAll(app); } finally { pr.finish(); } }), 20000);
     }
 }

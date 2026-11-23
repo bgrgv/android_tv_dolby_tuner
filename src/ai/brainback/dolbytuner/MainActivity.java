@@ -61,20 +61,16 @@ public class MainActivity extends Activity implements ServiceConnection {
         probe.setTypeface(Typeface.MONOSPACE);
         root.addView(probe);
 
-        bound = bindService(Dolby.intent(), this, Context.BIND_AUTO_CREATE);
-        if (!bound) status("bindService returned false (service not visible?)");
+        // Shared, never-unbound connection: a fresh register() would reset the Dolby engine.
+        DolbyClient.run(this, d -> onDolby(d));
     }
 
     @Override
-    protected void onDestroy() {
-        if (bound) unbindService(this);
-        super.onDestroy();
-    }
+    public void onServiceConnected(ComponentName n, IBinder b) { }
 
-    @Override
-    public void onServiceConnected(ComponentName n, IBinder b) {
+    private void onDolby(Dolby d) {
         try {
-            dolby = new Dolby(b);
+            dolby = d;
             status("Connected. Library loader: " + dolby.cl.getClass().getSimpleName()
                     + ". Saved values: " + prefs.getAll().size());
             buildControls();
@@ -98,19 +94,22 @@ public class MainActivity extends Activity implements ServiceConnection {
         String active = getSharedPreferences(EqService.STATE, MODE_PRIVATE).getString(EqService.KEY_ACTIVE, "off");
         Profiles.Profile ap = Profiles.byId(active);
         controls.addView(text("YouTube profiles  (active: " + (ap == null ? "none" : ap.label) + ")", 22));
-        LinearLayout yp = row();
-        for (Profiles.Profile p : Profiles.ALL) {
+        LinearLayout yp = null;
+        for (int i = 0; i < Profiles.ALL.length; i++) {
+            if (i % 4 == 0) { yp = row(); controls.addView(yp); }
+            Profiles.Profile p = Profiles.ALL[i];
             Button b = button(p.label, v -> applyProfile(p));
-            b.setTextSize(20);
-            yp.addView(b, new LinearLayout.LayoutParams(dp(230), dp(96)));
+            b.setTextSize(18);
+            yp.addView(b, new LinearLayout.LayoutParams(dp(200), dp(80)));
         }
-        yp.addView(button("EQ off", v -> {
+        LinearLayout offRow = row();
+        offRow.addView(button("EQ off", v -> {
             getSharedPreferences(EqService.STATE, MODE_PRIVATE).edit().putString(EqService.KEY_ACTIVE, "off").apply();
             EqService.start(this, "off");
             buildControls();
             status("EQ off (Dolby values left as they are)");
         }));
-        controls.addView(yp);
+        controls.addView(offRow);
         if (ap != null) controls.addView(text(ap.blurb, 14));
         controls.addView(text("Presets (saved, reapplied at boot)", 20));
         LinearLayout pr = row();

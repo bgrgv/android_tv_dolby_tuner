@@ -27,14 +27,19 @@ final class Profiles {
         final float inputGainDb;  // headroom so boosts do not clip into the limiter
         final float[] edges;      // band upper edges (Hz), same length as eq
         final float frameMs;      // DynamicsProcessing FFT frame: longer = finer bass control, more delay
+        final boolean limiter;    // false = no safety net (clipping possible at high volume)
         Profile(String id, String label, String blurb, String[] dolby, float[] eq, float inputGainDb) {
             this(id, label, blurb, dolby, EDGES, eq, inputGainDb, 10f);
         }
         Profile(String id, String label, String blurb, String[] dolby, float[] edges, float[] eq,
                 float inputGainDb, float frameMs) {
+            this(id, label, blurb, dolby, edges, eq, inputGainDb, frameMs, true);
+        }
+        Profile(String id, String label, String blurb, String[] dolby, float[] edges, float[] eq,
+                float inputGainDb, float frameMs, boolean limiter) {
             if (edges.length != eq.length) throw new IllegalArgumentException(id + ": edges/eq length");
-            this.id = id; this.label = label; this.blurb = blurb; this.dolby = dolby;
-            this.edges = edges; this.eq = eq; this.inputGainDb = inputGainDb; this.frameMs = frameMs;
+            this.id = id; this.label = label; this.blurb = blurb; this.dolby = dolby; this.edges = edges;
+            this.eq = eq; this.inputGainDb = inputGainDb; this.frameMs = frameMs; this.limiter = limiter;
         }
     }
 
@@ -93,7 +98,78 @@ final class Profiles {
             },
             THIRDS, MUSIC_EQ, -7f, 80f);
 
-    static final Profile[] ALL = {MUSIC, MUSIC_WIDE, VOICE};
+    /** Measured fit, see tuning/thunder.json. */
+    static final Profile THUNDER = new Profile("thunder", "Thunder",
+            "No safety net: +12 dB at 45-100 Hz, no limiter, no headroom, maximum Dolby surround. Clips at high volume by design",
+            new String[]{
+                    "VirtualizerMode", "e:ENABLE",
+                    "SpeakerVirtualizerAngle", "i:30",
+                    "VirtualizerSurroundBoostStrength", "i:96",
+                    "VolumeLevelerMode", "e:DISABLE",
+                    "VolumeLevelerStrength", "i:0",
+                    "DialogueEnhancerStrength", "i:0",
+            },
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 12f, 7.3f, -4.43f, -13f, -15f, -15f, -12.6f, -6.73f, -3.2f, -2.07f, -0.11f, -0.02f, -2.18f, -2.05f, -0.68f, 0.76f, 2.78f, 3.31f, 0.84f, -2.5f, -3.5f, -3.21f, -2.48f, -0.22f, 5.2f, 0f, 0f},
+            0f, 80f, false);
+
+    /** Measured fit, see tuning/movies.json. */
+    static final Profile MOVIES = new Profile("movies", "Movies",
+            "Thunder + vocals: big 50-80 Hz impact, controlled boom, dialogue presence, Dolby surround, dialogue enhancer 8",
+            new String[]{
+                    "VirtualizerMode", "e:ENABLE",
+                    "SpeakerVirtualizerAngle", "i:25",
+                    "VirtualizerSurroundBoostStrength", "i:80",
+                    "VolumeLevelerMode", "e:DISABLE",
+                    "VolumeLevelerStrength", "i:0",
+                    "DialogueEnhancerStrength", "i:8",
+            },
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 8f, -2.57f, -12.33f, -15f, -15f, -15f, -14.41f, -7.8f, -3.47f, -2.01f, 0.24f, 0.58f, -1.68f, -1.28f, 0.65f, 2.39f, 5.36f, 6.74f, 3.8f, -0.41f, -2.28f, -2.68f, -2.94f, -1.9f, 3.45f, 0f, 0f},
+            -9f, 60f);
+
+    /** Measured fit, see tuning/melodies.json. */
+    static final Profile MELODIES = new Profile("melodies", "Melodies",
+            "Warm and smooth: rounded bass, low-mid body, softened 3-5 kHz, silky air, gentle surround",
+            new String[]{
+                    "VirtualizerMode", "e:ENABLE",
+                    "SpeakerVirtualizerAngle", "i:20",
+                    "VirtualizerSurroundBoostStrength", "i:48",
+                    "VolumeLevelerMode", "e:DISABLE",
+                    "VolumeLevelerStrength", "i:0",
+                    "DialogueEnhancerStrength", "i:0",
+            },
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 4.47f, -8.38f, -15f, -15f, -15f, -15f, -13.31f, -6.03f, -1.73f, -1.01f, 0.26f, 0.13f, -2.04f, -1.7f, -0.23f, 0.75f, 2.68f, 3.26f, 0.03f, -4.29f, -5.43f, -4.26f, -3.02f, -0.22f, 6f, 0f, 0f},
+            -7f, 80f);
+
+    /** Measured fit, see tuning/night.json. */
+    static final Profile NIGHT = new Profile("night", "Night",
+            "Quiet hours: bass boom removed, voices forward, strong leveller, dialogue enhancer 10",
+            new String[]{
+                    "VirtualizerMode", "e:DISABLE",
+                    "VolumeLevelerMode", "e:ENABLE",
+                    "VolumeLevelerStrength", "i:8",
+                    "DialogueEnhancerStrength", "i:10",
+                    "SpeakerVirtualizerAngle", "i:10",
+                    "VirtualizerSurroundBoostStrength", "i:0",
+            },
+            THIRDS, new float[]{-12f, -12f, -12f, -12f, -16.23f, -20f, -20f, -20f, -20f, -20f, -16.61f, -9.42f, -4.2f, -1.56f, 0.88f, 0.56f, -2.05f, -1.85f, -0.31f, 1.41f, 4.72f, 6f, 3.88f, -0.18f, -2.04f, -3f, -3.92f, -2.92f, 2.01f, 0f, 0f},
+            -7f, 60f);
+
+    /** Measured fit, see tuning/pure.json. */
+    static final Profile PURE = new Profile("pure", "Pure",
+            "Neutral reference: measured room correction to a studio-style in-room curve, no Dolby effects",
+            new String[]{
+                    "VirtualizerMode", "e:DISABLE",
+                    "VolumeLevelerMode", "e:DISABLE",
+                    "VolumeLevelerStrength", "i:0",
+                    "DialogueEnhancerStrength", "i:0",
+                    "SpeakerVirtualizerAngle", "i:10",
+                    "VirtualizerSurroundBoostStrength", "i:0",
+            },
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 4.71f, -9.11f, -15f, -15f, -15f, -15f, -14.18f, -7.01f, -2.72f, -1.59f, 0.31f, 0.38f, -1.99f, -2.26f, -1.15f, 0.19f, 2.66f, 3.71f, 0.67f, -3.87f, -6f, -6.19f, -6.08f, -4.97f, 0.11f, 0f, 0f},
+            -5.7f, 80f);
+
+    /** Order = remote-button cycle order and on-screen order. */
+    static final Profile[] ALL = {MUSIC, MUSIC_WIDE, MELODIES, THUNDER, MOVIES, VOICE, NIGHT, PURE};
 
     static Profile byId(String id) {
         for (Profile p : ALL) if (p.id.equals(id)) return p;
