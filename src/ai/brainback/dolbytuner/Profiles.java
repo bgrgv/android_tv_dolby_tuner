@@ -45,13 +45,12 @@ final class Profiles {
 
     /**
      * Target: punchy 50-80 Hz for the woofer, controlled 100-250 Hz (the TV + room had a +29 dB
-     * hump at 125 Hz), flat mids, 2-2.5 kHz presence dip filled, gentle air. Measured result:
+     * hump at 125 Hz), flat mids, 2-2.5 kHz presence dip filled, treble tilting gently down
+     * (v2: the first fit made "s" sounds hiss; no boost above 5 kHz, where the mic reads low). Measured result:
      * 1.9 dB RMS from target (50 Hz - 12.5 kHz). 80 ms frame: music needs the bass precision,
      * and has no lips to sync.
      */
-    static final float[] MUSIC_EQ = {-6f, -6f, -6f, -6f, 6f, -6.01f, -14.47f, -15f, -15f, -15f,
-            -13.18f, -8.1f, -5.96f, -4.87f, -2.47f, -2.15f, -2.08f, -0.03f, 1.13f, 2.39f, 4.65f,
-            4.71f, 1.16f, -2.39f, -3.24f, -3.52f, -3.47f, -1.59f, 3.61f, 0f, 0f};
+    static final float[] MUSIC_EQ = {-6f, -6f, -6f, -6f, 6f, -6.01f, -14.47f, -15f, -15f, -15f, -13.18f, -8.1f, -5.96f, -4.87f, -2.47f, -2.15f, -2.08f, -0.03f, 1.13f, 2.39f, 4.65f, 4.71f, 1.16f, -3.39f, -6.24f, -7.52f, -7.47f, -5.09f, 0f, 0f, 0f};
 
     static final Profile MUSIC = new Profile("music", "Music",
             "Measured room correction: punchy 50-80 Hz, boom at 100-250 Hz removed, presence restored, Dolby virtual surround",
@@ -100,7 +99,7 @@ final class Profiles {
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
             },
-            THIRDS, new float[]{-6f, -6f, -6f, -6f, 8f, -2.35f, -11.17f, -15f, -15f, -15f, -12.12f, -5.26f, -1.75f, -1.76f, -0.37f, -0.07f, -1.72f, -1.65f, -0.68f, 1.45f, 5.17f, 6.56f, 2.9f, -1.77f, -3.22f, -3.44f, -3.15f, -0.66f, 5.24f, 0f, 0f},
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 8f, -2.35f, -11.17f, -15f, -15f, -15f, -12.12f, -5.26f, -1.75f, -1.76f, -0.37f, -0.07f, -1.72f, -1.65f, -0.68f, 1.45f, 5.17f, 6.06f, 1.9f, -3.27f, -5.72f, -7.44f, -7.65f, -5.16f, 0f, 0f, 0f},
             -9f, 80f);
 
     /** Measured fit, see tuning/thunder.json. */

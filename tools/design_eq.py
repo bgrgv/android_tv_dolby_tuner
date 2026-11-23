@@ -19,8 +19,8 @@ T = np.array(m.THIRDS, dtype=float)
 
 TARGETS = {
     # Punchy 50-80 Hz for the woofer, controlled 100-250 Hz (no boom), flat mids, gentle air.
-    "music": {50: 7, 63: 10, 80: 10, 100: 9, 125: 8, 160: 6, 200: 4, 250: 2, 315: 0, 4000: 0,
-              5000: 1, 6300: 1, 8000: 1, 10000: 1, 12500: 1},
+    "music": {50: 7, 63: 10, 80: 10, 100: 9, 125: 8, 160: 6, 200: 4, 250: 2, 315: 0, 3150: 0,
+              4000: -1, 5000: -2, 6300: -3, 8000: -3, 10000: -2.5, 12500: -2},
     # Speech: lean below 80 Hz, a little warmth at 100-250 Hz, presence at 2-4 kHz, soft top end.
     "voice": {50: -8, 63: -6, 80: -2, 100: 2, 125: 3, 160: 3, 200: 2, 250: 1, 315: 0, 1600: 0,
               2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 6300: 0, 8000: -1, 10000: -2, 12500: -3},
@@ -30,7 +30,8 @@ TARGETS = {
     # Music depth: fill the room. Big but controlled 50-125 Hz, warm 200-315 Hz body, clean mids,
     # presence and air for fidelity.
     "depth": {50: 12, 63: 13, 80: 13, 100: 12, 125: 10, 160: 8, 200: 5, 250: 4, 315: 2.5, 400: 1,
-              500: 0, 1600: 0, 2500: 1, 3150: 1, 4000: 1, 5000: 1, 6300: 1.5, 8000: 2, 10000: 2.5, 12500: 2.5},
+              500: 0, 1600: 0, 2500: 0.5, 3150: 0, 4000: -0.5, 5000: -1.5, 6300: -2.5, 8000: -2.5,
+              10000: -2, 12500: -1.5},
     # Movies: big low end for impact, controlled boom, dialogue presence.
     "movies": {50: 12, 63: 13, 80: 12, 100: 9, 125: 7, 160: 5, 200: 3, 250: 1, 315: 0, 1250: 0,
                2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 8000: 1, 10000: 0, 12500: 0},
@@ -50,6 +51,7 @@ WOOFER_MIN = 45.0      # measured: nothing useful below ~45 Hz
 MAX_BOOST, MAX_CUT = 6.0, -15.0
 CUT_LIMIT = {"voice": -20.0, "night": -20.0}   # speech wants far less of the TV's 80-200 Hz hump than music does
 FIT_LO, FIT_HI = 50, 12500
+NO_HF_BOOST = {"music", "depth"}   # MacBook mic reads high treble low: boosting there made "s" hiss
 
 
 def target_curve(name):
@@ -72,6 +74,7 @@ def fit(target, meas, prev=None, step=1.0):
     g = np.convolve(np.pad(g, 1, mode="edge"), [0.25, 0.5, 0.25], mode="valid")  # light smoothing
     g = np.clip(g, CUT_LIMIT.get(target, MAX_CUT), BOOST_LIMIT.get(target, MAX_BOOST))
     g[(T < FIT_LO) | (T > FIT_HI)] = 0.0
+    if target in NO_HF_BOOST: g[T >= 5000] = np.minimum(g[T >= 5000], 0.0)
     g[T < WOOFER_MIN] = -12.0 if target in ("voice", "night") else -6.0   # do not drive the woofer below its range
     edges = list(T[:-1] * 2 ** (1 / 6)) + [20000.0]
     inp = 0.0 if target in NO_SAFETY else -max(0.0, float(g.max())) - 1.0
