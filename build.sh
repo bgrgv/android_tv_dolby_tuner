@@ -1,12 +1,31 @@
 #!/bin/sh
-# Builds DolbyTuner.apk without Gradle: aapt2 -> javac -> d8 -> zipalign -> apksigner.
+# Builds build/DolbyTuner.apk without Gradle: aapt2 -> javac -> d8 -> zipalign -> apksigner.
+#
+# Needs an Android SDK with build-tools and one platform, plus a JDK 11+.
+#   ANDROID_HOME   SDK root (default: $ANDROID_SDK_ROOT, ~/Library/Android/sdk, Homebrew cmdline-tools)
+#   BUILD_TOOLS    build-tools version (default: newest installed)
+#   PLATFORM       platform dir name, e.g. android-34 (default: newest installed)
+#   JAVA_HOME      JDK (default: Android Studio's bundled JBR on macOS, else whatever is on PATH)
 set -e
 cd "$(dirname "$0")"
-SDK=/opt/homebrew/share/android-commandlinetools
-BT=$SDK/build-tools/36.0.0
-AJ=$SDK/platforms/android-34/android.jar
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-export PATH="$JAVA_HOME/bin:$PATH"
+
+pick_sdk() {
+  for d in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" "$HOME/Library/Android/sdk" "$HOME/Android/Sdk" \
+           /opt/homebrew/share/android-commandlinetools /usr/local/share/android-commandlinetools; do
+    [ -n "$d" ] && [ -d "$d/build-tools" ] && { echo "$d"; return; }
+  done
+  echo "No Android SDK found. Set ANDROID_HOME." >&2; exit 1
+}
+SDK=$(pick_sdk)
+BT=$SDK/build-tools/${BUILD_TOOLS:-$(ls "$SDK/build-tools" | sort -V | tail -1)}
+AJ=$SDK/platforms/${PLATFORM:-$(ls "$SDK/platforms" | sort -V | tail -1)}/android.jar
+
+if [ -z "$JAVA_HOME" ] && [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
+  JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+fi
+[ -n "$JAVA_HOME" ] && export JAVA_HOME PATH="$JAVA_HOME/bin:$PATH"
+
+echo "SDK: $SDK"; echo "build-tools: $BT"; echo "android.jar: $AJ"
 
 rm -rf build && mkdir -p build/classes build/dex
 "$BT/aapt2" compile --dir res -o build/res.zip
