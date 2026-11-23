@@ -67,7 +67,8 @@ final class Profiles {
 
     /**
      * Target: lean below 80 Hz, slight warmth 100-250 Hz, presence +2..3 dB at 2-4 kHz, soft top.
-     * Measured result: 2.6 dB RMS from target. 60 ms frame keeps lip sync acceptable for podcasts.
+     * Measured result: 2.6 dB RMS from target. All profiles share the 80 ms frame so switching
+     * can update the live EQ in place (a new effect = a burst of raw TV bass).
      */
     static final float[] VOICE_EQ = {-12f, -12f, -12f, -12f, -6.87f, -17.24f, -20f, -20f, -20f, -20f,
             -14.35f, -7.74f, -5.14f, -4.22f, -1.74f, -1.5f, -1.84f, -0.2f, 1.02f, 3.36f, 6f, 6f,
@@ -83,7 +84,7 @@ final class Profiles {
                     "SpeakerVirtualizerAngle", "i:10",
                     "VirtualizerSurroundBoostStrength", "i:0",
             },
-            THIRDS, VOICE_EQ, -7f, 60f);
+            THIRDS, VOICE_EQ, -7f, 80f);
 
     /** Same EQ as MUSIC, Dolby speaker virtualizer at maximum (virtual surround). */
     static final Profile MUSIC_WIDE = new Profile("music_wide", "Music wide",
@@ -124,7 +125,7 @@ final class Profiles {
                     "DialogueEnhancerStrength", "i:8",
             },
             THIRDS, new float[]{-6f, -6f, -6f, -6f, 8f, -2.57f, -12.33f, -15f, -15f, -15f, -14.41f, -7.8f, -3.47f, -2.01f, 0.24f, 0.58f, -1.68f, -1.28f, 0.65f, 2.39f, 5.36f, 6.74f, 3.8f, -0.41f, -2.28f, -2.68f, -2.94f, -1.9f, 3.45f, 0f, 0f},
-            -9f, 60f);
+            -9f, 80f);
 
     /** Measured fit, see tuning/melodies.json. */
     static final Profile MELODIES = new Profile("melodies", "Melodies",
@@ -152,7 +153,7 @@ final class Profiles {
                     "VirtualizerSurroundBoostStrength", "i:0",
             },
             THIRDS, new float[]{-12f, -12f, -12f, -12f, -16.23f, -20f, -20f, -20f, -20f, -20f, -16.61f, -9.42f, -4.2f, -1.56f, 0.88f, 0.56f, -2.05f, -1.85f, -0.31f, 1.41f, 4.72f, 6f, 3.88f, -0.18f, -2.04f, -3f, -3.92f, -2.92f, 2.01f, 0f, 0f},
-            -7f, 60f);
+            -7f, 80f);
 
     /** Measured fit, see tuning/pure.json. */
     static final Profile PURE = new Profile("pure", "Pure",

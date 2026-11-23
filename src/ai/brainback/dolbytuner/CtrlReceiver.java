@@ -36,11 +36,13 @@ public class CtrlReceiver extends BroadcastReceiver {
                 String kind = str(in, "kind", "sweep");
                 float secs = in.getFloatExtra("secs", 10f), level = in.getFloatExtra("level", -12f);
                 float f1 = in.getFloatExtra("f1", 20f), f2 = in.getFloatExtra("f2", 20000f);
+                // Finish the broadcast at once: manifest broadcasts are delivered one at a time,
+                // so holding it would block profile switches sent during playback.
                 new Thread(() -> {
                     try { play(kind, secs, level, f1, f2); }
                     catch (Throwable t) { Log.e(Dolby.TAG, "tone failed", t); }
-                    finally { pr.finish(); }
                 }).start();
+                pr.finish();
                 break;
             }
             case "dolby":
@@ -147,6 +149,21 @@ public class CtrlReceiver extends BroadcastReceiver {
         } // "silence": zeros
         float[] st = new float[sig.length * 2];
         for (int i = 0; i < sig.length; i++) { st[2 * i] = sig[i]; st[2 * i + 1] = sig[i]; }
+        if (kind.equals("pinkstereo")) {
+            // Independent L/R pink noise: exercises the Dolby virtualizer (it works on L-R content).
+            Random[] rs = {new Random(1), new Random(2)};
+            for (int ch = 0; ch < 2; ch++) {
+                double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                for (int i = 0; i < n; i++) {
+                    double w = rs[ch].nextGaussian() * 0.25;
+                    b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759;
+                    b2 = 0.96900 * b2 + w * 0.1538520; b3 = 0.86650 * b3 + w * 0.3104856;
+                    b4 = 0.55000 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.0168980;
+                    double p = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362; b6 = w * 0.115926;
+                    st[2 * (pre + i) + ch] = (float) Math.max(-1, Math.min(1, amp * p * 0.5));
+                }
+            }
+        }
         AudioTrack at = new AudioTrack.Builder()
                 .setAudioAttributes(new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)

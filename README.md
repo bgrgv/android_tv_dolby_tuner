@@ -25,13 +25,14 @@ one-press listening profiles for YouTube.
 | **Music wide** | Same EQ as Music | Maximum surround (angle 30, boost 96) | 80 ms |
 | **Melodies** | Warm, smooth: rounded bass, low-mid body, softened 3-5 kHz, silky air | Gentle surround (20 / 48) | 80 ms |
 | **Thunder** | +12 dB at 45-100 Hz, **no limiter, no headroom**: clips at high volume by design | Maximum surround | 80 ms |
-| **Movies** | Big 50-80 Hz impact + dialogue presence at 2-4 kHz | Surround (25 / 80), dialogue enhancer 8 | 60 ms |
-| **Podcasts & docs** | Bass boom cut up to 20 dB, speech presence +2..3 dB | Centred, dialogue enhancer 10, leveller 5 | 60 ms |
-| **Night** | Little bass, voices forward | Centred, dialogue enhancer 10, leveller 8 | 60 ms |
+| **Movies** | Big 50-80 Hz impact + dialogue presence at 2-4 kHz | Surround (25 / 80), dialogue enhancer 8 | 80 ms |
+| **Podcasts & docs** | Bass boom cut up to 20 dB, speech presence +2..3 dB | Centred, dialogue enhancer 10, leveller 5 | 80 ms |
+| **Night** | Little bass, voices forward | Centred, dialogue enhancer 10, leveller 8 | 80 ms |
 | **Pure** | Neutral studio-style in-room curve, a reference for judging the others | No Dolby effects | 80 ms |
 
-Longer EQ frames give finer bass control but add audio delay, so the profiles you watch faces
-with use 60 ms.
+All profiles share one 80 ms EQ frame so a switch can update the running EQ in place (see
+Gotchas). Longer frames give finer bass control but add audio delay; 80 ms is below the point
+where most people notice lip-sync drift.
 
 The EQ curves are **measured room corrections**, not guesses: the TV played sweeps, a MacBook
 microphone recorded them at the listening seat, and the EQ was fitted to a target over three
@@ -189,6 +190,11 @@ TV amp -> speakers + woofer
 - On the development TV the speakers + woofer + room already put **+29 dB at 125 Hz** over the
   midrange with the TV's Bass Boost at 5: "more bass" by ear was mostly boom. Measure before boosting.
 
+- **Never delete and recreate the EQ to switch profiles.** Releasing the old DynamicsProcessing
+  and creating a new one let the raw TV sound through for a moment: recorded on real YouTube
+  music as a 10-15 dB bass burst at every button press, then a "drop" as the correction engaged.
+  `EqService` now updates the live effect in place (same frame and band count), and when it must
+  rebuild it enables the new effect before releasing the old one.
 - **Register with the Dolby service once per process, never per action.**
   `DolbyAudioServiceClientManager.register()` calls `restoreDefaultState()` (asynchronously)
   whenever a new client token registers, and again on deregister and client death. Binding and
