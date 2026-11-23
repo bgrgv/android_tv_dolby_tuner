@@ -21,18 +21,19 @@ final class Profiles {
     }
 
     static final Profile MUSIC = new Profile("music", "Music",
-            "Thump + depth + clarity: 40-160 Hz lift, mud cut, presence and air, wide virtualizer, no leveller",
+            "Thump + depth + clarity: strong 40-160 Hz lift for the woofer, mud cut, presence and air, wide virtualizer, no leveller",
             new String[]{
                     "VirtualizerMode", "e:ENABLE",
-                    "SpeakerVirtualizerAngle", "i:15",
-                    "VirtualizerSurroundBoostStrength", "i:32",
+                    "SpeakerVirtualizerAngle", "i:25",
+                    "VirtualizerSurroundBoostStrength", "i:72",
                     "VolumeLevelerMode", "e:DISABLE",
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
             },
             //  <40   80   160   315   630  1.25k 2.5k  5k   10k  20k
-            new float[]{1f, 5f, 3.5f, 0f, -1.5f, 0f, 0.5f, 2f, 2.5f, 2f},
-            -4f);
+            // v2: more woofer feed (40-160), low-mid warmth, deeper mud cut, brighter top; more headroom.
+            new float[]{2f, 7f, 5.5f, 1f, -2f, -0.5f, 0.5f, 2.5f, 3f, 3f},
+            -7f);
 
     static final Profile VOICE = new Profile("voice", "Podcasts & docs",
             "Voice clarity: rumble cut, presence lift, centred (no virtualizer), dialogue enhancer, gentle leveller",
@@ -50,11 +51,11 @@ final class Profiles {
 
     /** Same EQ as MUSIC, Dolby speaker virtualizer pushed harder (virtual surround). */
     static final Profile MUSIC_WIDE = new Profile("music_wide", "Music wide",
-            "Music + stronger Dolby virtual surround (angle 25, surround boost 64)",
+            "Music + maximum Dolby virtual surround (angle 30, surround boost 96)",
             new String[]{
                     "VirtualizerMode", "e:ENABLE",
-                    "SpeakerVirtualizerAngle", "i:25",
-                    "VirtualizerSurroundBoostStrength", "i:64",
+                    "SpeakerVirtualizerAngle", "i:30",
+                    "VirtualizerSurroundBoostStrength", "i:96",
                     "VolumeLevelerMode", "e:DISABLE",
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
