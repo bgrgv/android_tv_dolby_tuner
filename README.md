@@ -94,11 +94,30 @@ Tips:
 - The EQ lowers the level a little to make room for the boosts, so expect to use a couple of
   volume steps more.
 
+## Remote button (optional)
+
+Turn a spare remote button into a sound switch: **short press** cycles Music -> Music wide ->
+Podcasts & docs (a note pops up with the name), **long press** (about 1 s) opens Dolby Tuner.
+It is an accessibility service that filters key events, so no root is needed.
+
+The development remote's spare button sends Linux `KEY_MEDIA` (scan code 226; its stock job is
+opening the TV's Media Center). To find yours, run `adb shell getevent -lt`, press the button, and
+change `SCAN_CODE` in `KeyService.java`. Then turn the service on:
+
+```sh
+adb shell settings put secure enabled_accessibility_services ai.brainback.dolbytuner/ai.brainback.dolbytuner.KeyService
+adb shell settings put secure accessibility_enabled 1
+```
+
+(If other accessibility services are already on, append ours to the existing value with a `:`.)
+That remote sends no key repeats while a button is held, so long press is timed from the release.
+
 ## Undo
 
 - **EQ off** stops the EQ.
 - **Clear saved** forgets saved Dolby values; then change the TV's Sound Mode or restart the TV to
   return to stock Dolby settings.
+- Remote button: `adb shell settings put secure enabled_accessibility_services ""`.
 - Or uninstall: `adb uninstall ai.brainback.dolbytuner`.
 
 ## Measure your own room
@@ -184,6 +203,7 @@ TV amp -> speakers + woofer
 AndroidManifest.xml
 build.sh                      aapt2 / javac / d8 / apksigner build, no Gradle
 res/drawable/banner.xml       launcher tile
+res/xml/keyservice.xml        accessibility config for the remote button
 tools/measure.py              sweep playback + recording + response analysis
 tools/design_eq.py            target curves, room-correction fit, push to TV, check
 tools/micrec.swift            reliable macOS mic recorder (AVAudioEngine)
@@ -194,7 +214,8 @@ src/ai/brainback/dolbytuner/
   Profiles.java               listening profiles: Dolby values + EQ curves
   EqService.java              foreground service holding the global EQ
   BootReceiver.java           reapplies the active profile and saved values after boot
-  CtrlReceiver.java           adb-only control: test signals, Dolby values, custom EQ
+  CtrlReceiver.java           adb-only control: test signals, Dolby values, custom EQ, restore
+  KeyService.java             remote button: short press = next profile, long press = open app
 ```
 
 To change a profile, edit the numbers in `Profiles.java` (EQ gains are in dB per band; band edges

@@ -68,27 +68,39 @@ public class CtrlReceiver extends BroadcastReceiver {
                 pr.finish();
                 break;
             }
+            case "restore": { // restart the EQ for the saved active profile (e.g. after reinstall)
+                String a = app.getSharedPreferences(EqService.STATE, Context.MODE_PRIVATE).getString(EqService.KEY_ACTIVE, "off");
+                Profiles.Profile p = Profiles.byId(a);
+                if (p != null) applyProfile(app, p, pr); else pr.finish();
+                Log.i(Dolby.TAG, "restore -> " + a);
+                break;
+            }
             case "profile": {
                 Profiles.Profile p = Profiles.byId(str(in, "id", ""));
                 if (p == null) { Log.e(Dolby.TAG, "no profile"); pr.finish(); break; }
-                withDolby(app, d -> {
-                    SharedPreferences.Editor ed = app.getSharedPreferences(Dolby.PREFS, Context.MODE_PRIVATE).edit();
-                    for (int i = 0; i + 1 < p.dolby.length; i += 2) {
-                        try { d.apply(p.dolby[i], p.dolby[i + 1]); ed.putString(p.dolby[i], p.dolby[i + 1]); }
-                        catch (Throwable t) { Log.e(Dolby.TAG, "profile " + p.dolby[i], t); }
-                    }
-                    ed.apply();
-                    app.getSharedPreferences(EqService.STATE, Context.MODE_PRIVATE).edit()
-                            .putString(EqService.KEY_ACTIVE, p.id).apply();
-                    EqService.start(app, p.id);
-                    Log.i(Dolby.TAG, "profile -> " + p.id);
-                }, pr);
+                applyProfile(app, p, pr);
                 break;
             }
             default:
                 Log.e(Dolby.TAG, "unknown cmd " + cmd);
                 pr.finish();
         }
+    }
+
+    /** Dolby values + EQ for a profile, saved as active (used by adb and the remote button). */
+    static void applyProfile(Context app, Profiles.Profile p, PendingResult pr) {
+        app.getSharedPreferences(EqService.STATE, Context.MODE_PRIVATE).edit()
+                .putString(EqService.KEY_ACTIVE, p.id).apply();
+        EqService.start(app, p.id);
+        withDolby(app, d -> {
+            SharedPreferences.Editor ed = app.getSharedPreferences(Dolby.PREFS, Context.MODE_PRIVATE).edit();
+            for (int i = 0; i + 1 < p.dolby.length; i += 2) {
+                try { d.apply(p.dolby[i], p.dolby[i + 1]); ed.putString(p.dolby[i], p.dolby[i + 1]); }
+                catch (Throwable t) { Log.e(Dolby.TAG, "profile " + p.dolby[i], t); }
+            }
+            ed.apply();
+            Log.i(Dolby.TAG, "profile -> " + p.id);
+        }, pr);
     }
 
     interface DolbyJob { void run(Dolby d) throws Exception; }
@@ -98,11 +110,11 @@ public class CtrlReceiver extends BroadcastReceiver {
             @Override public void onServiceConnected(ComponentName n, IBinder b) {
                 try { job.run(new Dolby(b)); } catch (Throwable t) { Log.e(Dolby.TAG, "dolby job", t); }
                 app.unbindService(this);
-                pr.finish();
+                if (pr != null) pr.finish();
             }
             @Override public void onServiceDisconnected(ComponentName n) { }
         };
-        if (!app.bindService(Dolby.intent(), conn, Context.BIND_AUTO_CREATE)) { Log.e(Dolby.TAG, "bind failed"); pr.finish(); }
+        if (!app.bindService(Dolby.intent(), conn, Context.BIND_AUTO_CREATE)) { Log.e(Dolby.TAG, "bind failed"); if (pr != null) pr.finish(); }
     }
 
     private static String str(Intent i, String k, String def) {

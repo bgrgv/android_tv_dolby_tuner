@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="key_service_desc">Remote button: short press switches the Dolby Tuner sound profile, long press opens Dolby Tuner. Reads only that one button.</string>
+</resources>
