@@ -95,6 +95,23 @@ public class MainActivity extends Activity implements ServiceConnection {
 
     private void buildControls() {
         controls.removeAllViews();
+        String active = getSharedPreferences(EqService.STATE, MODE_PRIVATE).getString(EqService.KEY_ACTIVE, "off");
+        Profiles.Profile ap = Profiles.byId(active);
+        controls.addView(text("YouTube profiles  (active: " + (ap == null ? "none" : ap.label) + ")", 22));
+        LinearLayout yp = row();
+        for (Profiles.Profile p : Profiles.ALL) {
+            Button b = button(p.label, v -> applyProfile(p));
+            b.setTextSize(20);
+            yp.addView(b, new LinearLayout.LayoutParams(dp(230), dp(96)));
+        }
+        yp.addView(button("EQ off", v -> {
+            getSharedPreferences(EqService.STATE, MODE_PRIVATE).edit().putString(EqService.KEY_ACTIVE, "off").apply();
+            EqService.start(this, "off");
+            buildControls();
+            status("EQ off (Dolby values left as they are)");
+        }));
+        controls.addView(yp);
+        if (ap != null) controls.addView(text(ap.blurb, 14));
         controls.addView(text("Presets (saved, reapplied at boot)", 20));
         LinearLayout pr = row();
         for (String[] p : Dolby.PRESETS) pr.addView(button(p[0], v -> applyPreset(p)));
@@ -103,6 +120,25 @@ public class MainActivity extends Activity implements ServiceConnection {
         for (String[] e : Dolby.ENUMS) if (dolby.supported(e[4])) addEnumRow(e[0], e[1], e[2], e[3]);
         for (String[] i : Dolby.INTS) if (dolby.supported(i[2])) addIntRow(i[0], i[1]);
         addFloatRow("PCM stream gain (linear)", "PcmPlaybackStreamGain");
+    }
+
+    private void applyProfile(Profiles.Profile p) {
+        SharedPreferences.Editor ed = prefs.edit();
+        StringBuilder sb = new StringBuilder(p.label).append(": ");
+        int fails = 0;
+        for (int i = 0; i + 1 < p.dolby.length; i += 2) {
+            try {
+                int r = dolby.apply(p.dolby[i], p.dolby[i + 1]);
+                if (r != 0) fails++;
+                ed.putString(p.dolby[i], p.dolby[i + 1]);
+            } catch (Throwable t) { fails++; Log.e(Dolby.TAG, "profile " + p.dolby[i], t); }
+        }
+        ed.apply();
+        getSharedPreferences(EqService.STATE, MODE_PRIVATE).edit().putString(EqService.KEY_ACTIVE, p.id).apply();
+        EqService.start(this, p.id);
+        sb.append("Dolby ").append(fails == 0 ? "ok" : fails + " failed");
+        buildControls();
+        status.postDelayed(() -> status(sb + " | " + EqService.status), 800);
     }
 
     private void applyPreset(String[] p) {

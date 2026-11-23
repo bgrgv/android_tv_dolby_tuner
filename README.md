@@ -22,3 +22,12 @@ which is exported without a permission.
 - Ranges reported: dialogue enhancer 0-16, AC-4 DE 0-12, leveller 0-10, virtualizer angle 5-30,
   surround boost 0-96, DRC 0-100, AAC ref level 0-127, PCM gain 0.0-1.0.
 - Shell `setParameters` on audio_flinger is refused (-1); reads work (`diaglogue_enhancement`, etc.).
+
+## YouTube profiles (EqService)
+
+- Music / Music wide / Podcasts & docs: Dolby values + a global DynamicsProcessing EQ + limiter on
+  session 0 (curves in `Profiles.java`). The TV has a single MIXER output (AudioOut_D), so YouTube's
+  track goes through it; verified with `dumpsys media.audio_flinger`.
+- EqService is a foreground service: the EQ survives closing the app. Force-stopping the app kills it;
+  boot reapplies the active profile.
+- The AOSP bundle Virtualizer is headphone-only, so virtual surround = the Dolby speaker virtualizer.

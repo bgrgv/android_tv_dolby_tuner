@@ -15,6 +15,9 @@ public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context ctx, Intent intent) {
         final Context app = ctx.getApplicationContext();
+        String active = app.getSharedPreferences(EqService.STATE, Context.MODE_PRIVATE)
+                .getString(EqService.KEY_ACTIVE, "off");
+        if (Profiles.byId(active) != null) EqService.start(app, active);
         if (app.getSharedPreferences(Dolby.PREFS, Context.MODE_PRIVATE).getAll().isEmpty()) return;
         final PendingResult pr = goAsync();
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
