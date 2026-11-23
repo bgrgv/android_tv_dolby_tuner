@@ -104,7 +104,7 @@ final class Profiles {
 
     /** Measured fit, see tuning/thunder.json. */
     static final Profile THUNDER = new Profile("thunder", "Thunder",
-            "No safety net: up to +15 dB boom at 63-160 Hz, no limiter, no headroom, maximum Dolby surround. Clips at high volume by design",
+            "Broad thunder: boom spread across 80-250 Hz (max +10 dB a band), deepest 50-63 Hz eased so the woofer stops rattling; no limiter, 3 dB headroom, maximum surround",
             new String[]{
                     "VirtualizerMode", "e:ENABLE",
                     "SpeakerVirtualizerAngle", "i:30",
@@ -113,8 +113,8 @@ final class Profiles {
                     "VolumeLevelerStrength", "i:0",
                     "DialogueEnhancerStrength", "i:0",
             },
-            THIRDS, new float[]{-6f, -6f, -6f, -6f, 15f, 14.28f, 3.1f, -6.16f, -10.87f, -11.01f, -8.53f, -5.31f, -3.96f, -2.99f, -0.64f, -1.12f, -2.54f, -1.11f, 0.33f, 1.8f, 3.81f, 3.41f, -0.03f, -3.25f, -4f, -3.8f, -3.06f, -0.7f, 5.12f, 0f, 0f},
-            0f, 80f, false);
+            THIRDS, new float[]{-6f, -6f, -6f, -6f, 10f, 10f, 10f, 3.98f, -0.76f, -1.91f, -0.77f, 1.12f, 2.17f, 2.09f, 1.62f, 0.99f, 0.23f, 0.23f, 1.05f, 3.08f, 4.89f, 4.61f, 2.91f, 0.28f, -0.78f, -1.18f, -0.9f, 0f, 0f, 0f, 0f},
+            -3f, 80f, false);
 
     /** Measured fit, see tuning/movies.json. */
     static final Profile MOVIES = new Profile("movies", "Movies",

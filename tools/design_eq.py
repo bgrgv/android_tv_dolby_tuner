@@ -25,8 +25,9 @@ TARGETS = {
     "voice": {50: -8, 63: -6, 80: -2, 100: 2, 125: 3, 160: 3, 200: 2, 250: 1, 315: 0, 1600: 0,
               2000: 2, 2500: 3, 3150: 3, 4000: 2, 5000: 1, 6300: 0, 8000: -1, 10000: -2, 12500: -3},
     # Thunder: as much 45-100 Hz as the woofer will take. No limiter, no headroom (deliberately unsafe).
-    "thunder": {50: 18, 63: 22, 80: 22, 100: 20, 125: 18, 160: 14, 200: 8, 250: 4, 315: 0, 4000: 0,
-                6300: 1, 10000: 2, 12500: 2},
+    # v3: broad smooth shelf, 50-400 Hz (spread, not one hammered peak); v2's +15 dB bands clipped/rattled.
+    "thunder": {50: 15, 63: 17, 80: 19, 100: 19, 125: 18, 160: 17, 200: 14, 250: 10, 315: 6, 400: 3,
+                500: 1, 630: 0, 4000: 0, 6300: 0, 10000: 0, 12500: 0},
     # Music depth: fill the room. Big but controlled 50-125 Hz, warm 200-315 Hz body, clean mids,
     # presence and air for fidelity.
     "depth": {50: 12, 63: 13, 80: 13, 100: 12, 125: 10, 160: 8, 200: 5, 250: 4, 315: 2.5, 400: 1,
@@ -45,13 +46,15 @@ TARGETS = {
     "pure": {50: 6, 63: 7, 80: 7, 100: 6, 125: 5, 160: 4, 200: 3, 250: 2, 315: 1, 500: 0.5, 1000: 0,
              2000: -0.5, 4000: -1, 8000: -2, 10000: -2.5, 12500: -3},
 }
-BOOST_LIMIT = {"thunder": 15.0, "movies": 8.0, "depth": 8.0}
+BOOST_LIMIT = {"thunder": 10.0, "movies": 8.0, "depth": 8.0}
+HEADROOM = {"thunder": -3.0}   # no limiter, but enough headroom that bass peaks stop clipping (rattle)
+SMOOTH = {"thunder": [1, 2, 3, 2, 1]}   # wider smoothing: no narrow peaks
 NO_SAFETY = {"thunder"}        # input gain 0 dB and the app turns the limiter off
 WOOFER_MIN = 45.0      # measured: nothing useful below ~45 Hz
 MAX_BOOST, MAX_CUT = 6.0, -15.0
 CUT_LIMIT = {"voice": -20.0, "night": -20.0}   # speech wants far less of the TV's 80-200 Hz hump than music does
 FIT_LO, FIT_HI = 50, 12500
-NO_HF_BOOST = {"music", "depth"}   # MacBook mic reads high treble low: boosting there made "s" hiss
+NO_HF_BOOST = {"music", "depth", "thunder"}   # MacBook mic reads high treble low: boosting there made "s" hiss
 
 
 def target_curve(name):
@@ -71,13 +74,14 @@ def fit(target, meas, prev=None, step=1.0):
     err = tgt - mes
     base = np.zeros_like(T) if prev is None else np.array(prev["third_gains"])
     g = base + step * err
-    g = np.convolve(np.pad(g, 1, mode="edge"), [0.25, 0.5, 0.25], mode="valid")  # light smoothing
+    k = np.array(SMOOTH.get(target, [1, 2, 1]), dtype=float); k /= k.sum()
+    g = np.convolve(np.pad(g, len(k) // 2, mode="edge"), k, mode="valid")  # smoothing
     g = np.clip(g, CUT_LIMIT.get(target, MAX_CUT), BOOST_LIMIT.get(target, MAX_BOOST))
     g[(T < FIT_LO) | (T > FIT_HI)] = 0.0
     if target in NO_HF_BOOST: g[T >= 5000] = np.minimum(g[T >= 5000], 0.0)
     g[T < WOOFER_MIN] = -12.0 if target in ("voice", "night") else -6.0   # do not drive the woofer below its range
     edges = list(T[:-1] * 2 ** (1 / 6)) + [20000.0]
-    inp = 0.0 if target in NO_SAFETY else -max(0.0, float(g.max())) - 1.0
+    inp = HEADROOM.get(target, 0.0) if target in NO_SAFETY else -max(0.0, float(g.max())) - 1.0
     out = {"target": target, "edges": [round(e, 1) for e in edges], "third_gains": [round(x, 2) for x in g],
            "gains": [round(x, 2) for x in g], "input": round(inp, 1)}
     with open(os.path.join(m.OUT, target + ".json"), "w") as fh: json.dump(out, fh, indent=1)

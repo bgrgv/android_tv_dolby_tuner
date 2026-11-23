@@ -24,7 +24,7 @@ one-press listening profiles for YouTube.
 | **Music** | Punchy 50-80 Hz, the TV's 100-250 Hz boom cut up to 15 dB, 2-2.5 kHz presence dip filled | Surround (angle 25, boost 72) | 80 ms |
 | **Music depth** | Fills the room: deep controlled 50-125 Hz, warm 200-315 Hz body, clean mids, presence and air | Maximum surround (angle 30, boost 96) | 80 ms |
 | **Melodies** | Warm, smooth: rounded bass, low-mid body, softened 3-5 kHz, silky air | Gentle surround (20 / 48) | 80 ms |
-| **Thunder** | Up to +15 dB boom at 63-160 Hz, **no limiter, no headroom**: clips at high volume by design | Maximum surround | 80 ms |
+| **Thunder** | Boom spread across 80-250 Hz (at most +10 dB a band), 50-63 Hz eased so the woofer does not rattle; **no limiter**, only 3 dB headroom | Maximum surround | 80 ms |
 | **Movies** | Big 50-80 Hz impact + dialogue presence at 2-4 kHz | Surround (25 / 80), dialogue enhancer 8 | 80 ms |
 | **Podcasts & docs** | Bass boom cut up to 20 dB, speech presence +2..3 dB | Centred, dialogue enhancer 10, leveller 5 | 80 ms |
 | **Night** | Little bass, voices forward | Centred, dialogue enhancer 10, leveller 8 | 80 ms |
