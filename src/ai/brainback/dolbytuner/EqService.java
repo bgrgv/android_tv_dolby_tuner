@@ -23,6 +23,8 @@ public class EqService extends Service {
 
     static volatile String status = "EQ not running";
     private DynamicsProcessing dp;
+    /** Frame override for custom (adb) curves; profiles carry their own frameMs. */
+    static float frameMs = 40f;
 
     static void start(Context c, String profileId) {
         c.startForegroundService(new Intent(c, EqService.class).putExtra(EXTRA_PROFILE, profileId));
@@ -31,8 +33,16 @@ public class EqService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String id = intent != null ? intent.getStringExtra(EXTRA_PROFILE) : null;
+        if (intent != null && intent.hasExtra("frame")) frameMs = intent.getFloatExtra("frame", frameMs);
         if (id == null) id = getSharedPreferences(STATE, MODE_PRIVATE).getString(KEY_ACTIVE, "off");
         Profiles.Profile p = Profiles.byId(id);
+        if ("custom".equals(id) && intent != null && intent.hasExtra("gains")) {
+            // Measurement / tuning hook (adb via CtrlReceiver): not saved, not restored at boot.
+            float[] g = intent.getFloatArrayExtra("gains");
+            float[] e = intent.getFloatArrayExtra("edges");
+            p = new Profiles.Profile("custom", "Custom", "", new String[0],
+                    e != null ? e : Profiles.EDGES, g, intent.getFloatExtra("input", 0f), frameMs);
+        }
         startForeground(1, notification(p == null ? "EQ off" : "EQ: " + p.label));
         release();
         if (p == null) {
@@ -53,19 +63,20 @@ public class EqService extends Service {
     }
 
     private void apply(Profiles.Profile p) {
-        int n = Profiles.EDGES.length;
+        int n = p.edges.length;
         DynamicsProcessing.Config cfg = new DynamicsProcessing.Config.Builder(
                 DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, 2,
                 true, n,      // pre-EQ
                 false, 0,     // multiband compressor
                 false, 0,     // post-EQ
                 true)         // limiter
-                .setPreferredFrameDuration(10)
+                // 10 ms frames give ~100 Hz FFT bins: too coarse to shape bass bands.
+                .setPreferredFrameDuration(p.frameMs)
                 .build();
         dp = new DynamicsProcessing(0, 0, cfg);
         DynamicsProcessing.Eq eq = new DynamicsProcessing.Eq(true, true, n);
         for (int i = 0; i < n; i++) {
-            eq.getBand(i).setCutoffFrequency(Profiles.EDGES[i]);
+            eq.getBand(i).setCutoffFrequency(p.edges[i]);
             eq.getBand(i).setGain(p.eq[i]);
         }
         dp.setPreEqAllChannelsTo(eq);

@@ -35,6 +35,10 @@
 
         <service android:name=".EqService" android:exported="false" />
 
+        <!-- adb-only control surface: DUMP is held by the shell user, not by apps. -->
+        <receiver android:name=".CtrlReceiver" android:exported="true"
+            android:permission="android.permission.DUMP" />
+
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
